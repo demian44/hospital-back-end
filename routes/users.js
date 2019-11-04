@@ -1,11 +1,8 @@
 var express = require('express');
-
 app = express();
-
 var bcrypt = require('bcryptjs');
-
-
 var User = require('../models/user');
+var middlewareAuth = require('../middlewares/autentication');
 
 //
 // Retrieve all the users
@@ -28,10 +25,11 @@ app.get('/', (req, res, next) => {
   });
 });
 
+
 //
 // Create a user
 //
-app.post('/', (req, res, next) => {
+app.post('/', middlewareAuth.verifyToken, (req, res, next) => {
   const body = req.body;
   let user = new User({
     name: body.name,
@@ -52,15 +50,19 @@ app.post('/', (req, res, next) => {
 
     res.status(201).json({
       ok: true,
-      message: 'user created'
+      message: 'user created',
+      user: req.user
     });
   });
 });
 
+
+
+
 //
 // Update Password
 //
-app.put('/:id', (request, response) => {
+app.put('/:id', middlewareAuth.verifyToken, (request, response) => {
   let id = request.params.id;
   const body = request.body;
 
@@ -84,7 +86,8 @@ app.put('/:id', (request, response) => {
     userResponse.email = body.email;
     userResponse.role = body.role;
 
-    // Este es el usuario que obtuve con el metodo FindById, este presenta una conexión con el objeto en la base dedatos 
+    // Este es el usuario que obtuve con el metodo FindById, 
+    //este presenta una conexión con el objeto en la base dedatos 
     userResponse.save((error, saveUser) => {
       if (error) {
         return response.status(400).json({
@@ -99,6 +102,34 @@ app.put('/:id', (request, response) => {
         user: saveUser
       });
     })
+  });
+});
+
+//
+// Delete user by id
+//
+app.delete('/:id', middlewareAuth.verifyToken, (request, response) => {
+  let id = request.params.id;
+
+  User.findByIdAndRemove(id, (error, deletedUser) => {
+    if (error) {
+      return response.status(500).json({
+        ok: false,
+        errors: error
+      });
+    }
+
+    if (!deletedUser) {
+      return response.status(400).json({
+        ok: false,
+        message: { message: `the user with the id ${id} does not exist` }
+      });
+    }
+
+    response.status(200).json({
+      ok: true,
+      user: deletedUser
+    });
   });
 });
 
