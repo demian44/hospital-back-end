@@ -1,14 +1,15 @@
 var express = require('express');
 app = express();
 var bcrypt = require('bcryptjs');
-var User = require('../models/user');
+var Hospital = require('../models/hospital');
 var middlewareAuth = require('../middlewares/autentication');
+
 
 //
 // Retrieve all the users
 //
 app.get('/', (req, res, next) => {
-  User.find({}, 'name email img id role').exec((err, usersResponse) => {
+  Hospital.find({}, 'name amg user').exec((err, hospitalsResponse) => {
     if (err) {
       return res.status(500).json({
         ok: false,
@@ -19,8 +20,8 @@ app.get('/', (req, res, next) => {
 
     res.status(200).json({
       ok: true,
-      message: 'Get users',
-      users: usersResponse
+      message: 'Get hospitals',
+      hospitals: hospitalsResponse
     });
   });
 });
@@ -30,27 +31,25 @@ app.get('/', (req, res, next) => {
 //
 app.post('/', middlewareAuth.verifyToken, (req, res, next) => {
   const body = req.body;
-  let user = new User({
+  let hospital = new Hospital({
     name: body.name,
-    email: body.email,
-    password: bcrypt.hashSync(body.password, 10),
-    img: body.img,
-    role: body.role
+    user: req.user.id,    
+    img: body.img    
   });
 
-  user.save((err, saveUser) => {
+  hospital.save((err, savedHospital) => {
     if (err) {
       res.status(400).json({
         ok: false,
-        message: 'error trying to create the user',
+        message: 'error trying to create the hospital',
         errors: err
       });
     }
 
     res.status(201).json({
       ok: true,
-      message: 'user created',
-      user: req.user
+      message: 'hospital created',
+      user: hospital
     });
   });
 });
@@ -62,7 +61,7 @@ app.put('/:id', middlewareAuth.verifyToken, (request, response) => {
   let id = request.params.id;
   const body = request.body;
 
-  User.findById(id, 'name role img email id').exec((error, userResponse) => {
+  Hospital.findById(id, 'name img id user').exec((error, hospitalResponse) => {
 
     if (error) {
       return response.status(500).json({
@@ -71,31 +70,35 @@ app.put('/:id', middlewareAuth.verifyToken, (request, response) => {
       });
     }
 
-    if (!userResponse) {
+    if (!hospitalResponse) {
       return response.status(400).json({
         ok: false,
-        message: { message: `the user with the id ${id} does not exist` }
+        message: { message: `the hospital with the id ${id} does not exist` }
       });
     }
+    
+    if(body.name){
+      hospitalResponse.name = body.name;
+    }
 
-    userResponse.name = body.name;
-    userResponse.email = body.email;
-    userResponse.role = body.role;
+    if(body.img){
+      hospitalResponse.img = body.img;
+    }
 
     // Este es el usuario que obtuve con el metodo FindById, 
     //este presenta una conexión con el objeto en la base dedatos 
-    userResponse.save((error, saveUser) => {
+    hospitalResponse.save((error, saveHospital) => {
       if (error) {
         return response.status(400).json({
           ok: false,
-          message: `Error trying to update the user with id ${id}`,
+          message: `Error trying to update the hospital with id ${id}`,
           errors: error
         })
       }
 
       response.status(200).json({
         ok: true,
-        user: saveUser
+        user: saveHospital
       });
     })
   });
@@ -107,7 +110,7 @@ app.put('/:id', middlewareAuth.verifyToken, (request, response) => {
 app.delete('/:id', middlewareAuth.verifyToken, (request, response) => {
   let id = request.params.id;
 
-  User.findByIdAndRemove(id, (error, deletedUser) => {
+  Hospital.findByIdAndRemove(id, (error, deletedHospital) => {
     if (error) {
       return response.status(500).json({
         ok: false,
@@ -115,16 +118,16 @@ app.delete('/:id', middlewareAuth.verifyToken, (request, response) => {
       });
     }
 
-    if (!deletedUser) {
+    if (!deletedHospital) {
       return response.status(400).json({
         ok: false,
-        message: { message: `the user with the id ${id} does not exist` }
+        message: { message: `the hospital with the id ${id} does not exist` }
       });
     }
 
     response.status(200).json({
       ok: true,
-      user: deletedUser
+      hospital: deletedHospital
     });
   });
 });
