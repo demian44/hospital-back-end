@@ -38,8 +38,8 @@ app.post('/', (request, response) => {
       });
     }
 
-    userResponse = { name: userResponse.name, email: userResponse.email }                
-    let token = jwt.sign({ user: userResponse }, SEED, { expiresIn: 14400 });
+    userResponse = { name: userResponse.name, email: userResponse.email, id: userResponse._id }                
+    let token = jwt.sign({ user: userResponse }, SEED, { expiresIn: 1014400 });
     response.status(200).json({
       ok: true,
       message: 'login succefull',

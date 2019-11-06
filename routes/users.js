@@ -8,21 +8,47 @@ var middlewareAuth = require('../middlewares/autentication');
 // Retrieve all the users
 //
 app.get('/', (req, res, next) => {
-  User.find({}, 'name email img id role').exec((err, usersResponse) => {
-    if (err) {
-      return res.status(500).json({
-        ok: false,
-        message: 'Error on data base',
-        errors: err
-      });
-    }
 
-    res.status(200).json({
-      ok: true,
-      message: 'Get users',
-      users: usersResponse
+  var from  = 0, limit = 0;
+
+  if (!isNaN(req.query.from)) {
+    from = Number(req.query.from);
+  }
+
+  if (!isNaN(req.query.limit)) {
+    limit = Number(req.query.limit);
+  }
+
+  User.find({}, 'name email img id role')
+    .skip(from)
+    .limit(limit)
+    .exec((err, usersResponse) => {
+      if (err) {
+        return res.status(500).json({
+          ok: false,
+          message: 'Error on data base',
+          errors: err
+        });
+      }
+
+      User.count({}, (err, total) => {
+        if (err) {
+          res.status(500).json({
+            ok: false,
+            message: "Error",
+            error: err
+          });
+        }
+        else {
+          res.status(200).json({
+            ok: true,
+            message: 'Get users',
+            users: usersResponse,
+            total: total
+          });
+        }
+      });
     });
-  });
 });
 
 //
@@ -49,8 +75,7 @@ app.post('/', middlewareAuth.verifyToken, (req, res, next) => {
 
     res.status(201).json({
       ok: true,
-      message: 'user created',
-      user: req.user
+      message: 'user created'
     });
   });
 });

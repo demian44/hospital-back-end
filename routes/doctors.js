@@ -8,21 +8,49 @@ var middlewareAuth = require('../middlewares/autentication');
 // Retrieve all the users
 //
 app.get('/', (req, res, next) => {
-  Doctor.find({}, 'name amg user hospital').exec((err, doctorsResponse) => {
-    if (err) {
-      return res.status(500).json({
-        ok: false,
-        message: 'Error on data base',
-        errors: err
-      });
-    }
 
-    res.status(200).json({
-      ok: true,
-      message: 'Get doctors',
-      doctors: doctorsResponse
+  var from = 0, limit = 0;
+
+  if (!isNaN(req.query.from)) {
+    from = Number(req.query.from);
+  }
+
+  if (!isNaN(req.query.limit)) {
+    limit = Number(req.query.limit);
+  }
+
+  Doctor.find({}, 'name amg user hospital')
+    .skip(from)
+    .limit(limit)
+    .populate('user', 'name email id')
+    .populate('hospital')
+    .exec((err, doctorsResponse) => {
+      if (err) {
+        return res.status(500).json({
+          ok: false,
+          message: 'Error on data base',
+          errors: err
+        });
+      }
+
+      Doctor.count({}, (err, total) => {
+        if (err) {
+          res.status(500).json({
+            ok: false,
+            message: 'Error',
+            error: err,
+          });
+        }
+        else {
+          res.status(200).json({
+            ok: true,
+            message: 'Get doctors',
+            doctors: doctorsResponse,
+            total: total
+          });
+        }
+      });
     });
-  });
 });
 
 //
@@ -32,9 +60,9 @@ app.post('/', middlewareAuth.verifyToken, (req, res, next) => {
   const body = req.body;
   let doctor = new Doctor({
     name: body.name,
-    user: req.user.id,    
+    user: req.user.id,
     img: body.img,
-    hospital: body.hospital  
+    hospital: body.hospital
   });
 
   doctor.save((err, savedDoctorl) => {
@@ -76,16 +104,16 @@ app.put('/:id', middlewareAuth.verifyToken, (request, response) => {
         message: { message: `the doctor with the id ${id} does not exist` }
       });
     }
-    
-    if(body.name){
+
+    if (body.name) {
       doctorResponse.name = body.name;
     }
 
-    if(body.img){
+    if (body.img) {
       doctorResponse.img = body.img;
     }
 
-    if(body.hospital){
+    if (body.hospital) {
       doctorResponse.hospital = body.hospital;
     }
 

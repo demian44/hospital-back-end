@@ -9,6 +9,8 @@ var usersRoutes = require('./routes/users');
 var hospitalsRoutes = require('./routes/hospitals');
 var doctorsRoutes = require('./routes/doctors');
 var loginRoutes = require('./routes/login');
+var busquedaRoutes = require('./routes/busqueda');
+var uploadRoutes = require('./routes/upload');
 
 // Initialize express
 var app = express();
@@ -31,7 +33,8 @@ app.use('/users', usersRoutes);
 app.use('/hospital', hospitalsRoutes);
 app.use('/doctor', doctorsRoutes);
 app.use('/login', loginRoutes);
-app.use('/login', loginRoutes);
+app.use('/busqueda', busquedaRoutes);
+app.use('/upload', uploadRoutes);
 app.use('/', appRoutes);
 
 app.listen(3000, () => {

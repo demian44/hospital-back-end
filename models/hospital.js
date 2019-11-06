@@ -4,9 +4,9 @@ var Schema = mongoose.Schema;
 
 var schemaHospitals = new Schema({
 
-  name: { type: String, required: [true, 'The name is missing' /* Mensaje quje retorna si no se incluye el campo */] },
+  name: { type: String, required: [true, 'The name is missing' /* Mensaje que retorna si no se incluye el campo */]},
   img: { type: String, required: false },
-  user: { type: Schema.Types.ObjectId, ref: 'User' }
+  user: { type: Schema.Types.ObjectId, ref: 'User', required: true }
 }, { collection: "hospitals" });
 
 schemaHospitals.plugin(uniqueValidator, { message: '{PATH} must be unique' });

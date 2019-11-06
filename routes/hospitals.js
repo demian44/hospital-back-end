@@ -6,35 +6,63 @@ var middlewareAuth = require('../middlewares/autentication');
 
 
 //
-// Retrieve all the users
+// Retrieve all the hospitals 
 //
 app.get('/', (req, res, next) => {
-  Hospital.find({}, 'name amg user').exec((err, hospitalsResponse) => {
-    if (err) {
-      return res.status(500).json({
-        ok: false,
-        message: 'Error on data base',
-        errors: err
-      });
-    }
 
-    res.status(200).json({
-      ok: true,
-      message: 'Get hospitals',
-      hospitals: hospitalsResponse
+  var from = 0, limit = 0;
+
+  if (!isNaN(req.query.from)) {
+    from = Number(req.query.from);
+  }
+
+  if (!isNaN(req.query.limit)) {
+    limit = Number(req.query.limit);
+  }
+
+  Hospital.find({})
+    .skip(from)
+    .limit(limit)
+    .populate('user', 'role _id name email')
+    .exec((err, hospitalsResponse) => {
+      if (err) {
+        return res.status(500).json({
+          ok: false,
+          message: 'Error on data base',
+          errors: err
+        });
+      }
+
+
+      Hospital.count({}, (err, total) => {
+        if (err) {
+          res.status(500).json({
+            ok: false,
+            message: 'Error',
+            error: err,
+          });
+        }
+        else {
+          res.status(200).json({
+            ok: true,
+            message: 'Get hospitals',
+            hospitals: hospitalsResponse,
+            total: total
+          });
+        }
+      });
     });
-  });
 });
 
 //
-// Create a user
+// Create a hospital
 //
 app.post('/', middlewareAuth.verifyToken, (req, res, next) => {
   const body = req.body;
   let hospital = new Hospital({
     name: body.name,
-    user: req.user.id,    
-    img: body.img    
+    user: req.user.id,
+    img: body.img
   });
 
   hospital.save((err, savedHospital) => {
@@ -49,7 +77,7 @@ app.post('/', middlewareAuth.verifyToken, (req, res, next) => {
     res.status(201).json({
       ok: true,
       message: 'hospital created',
-      user: hospital
+      hospital: hospital
     });
   });
 });
@@ -76,12 +104,12 @@ app.put('/:id', middlewareAuth.verifyToken, (request, response) => {
         message: { message: `the hospital with the id ${id} does not exist` }
       });
     }
-    
-    if(body.name){
+
+    if (body.name) {
       hospitalResponse.name = body.name;
     }
 
-    if(body.img){
+    if (body.img) {
       hospitalResponse.img = body.img;
     }
 
