@@ -49,4 +49,14 @@ app.post('/', (request, response) => {
   });
 });
 
+app.post('/google',(req, res)=>{
+
+  return res.status(200).json({
+    ok: true,
+    message: 'Todo Piola',
+  })
+
+});
+
+
 module.exports = app;
