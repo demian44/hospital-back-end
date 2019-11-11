@@ -3,7 +3,6 @@ app = express();
 var Doctor = require('../models/doctor');
 var middlewareAuth = require('../middlewares/autentication');
 
-
 //
 // Retrieve all the users
 //
