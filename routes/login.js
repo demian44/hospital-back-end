@@ -87,12 +87,59 @@ app.post('/google', async (req, res) => {
     });
   });
 
+  User.findOne({ email: googleUser.email }, (error, userDB) => {
+    if (error) {
+      return res.status(500).json({
+        ok: false,
+        message: "Error en la base de datos",
+        error: error
+      });
+    }
 
-  return res.status(200).json({
-    ok: true,
-    message: 'Todo Piola',
-    googleUser: googleUser
-  })
+    if (userDB) {
+      if (userDB.google === false) {
+        return res.status(400).json({
+          ok: false,
+          message: "Debe usar su autenticacion normal",
+        });
+      } else {
+        userDB.password = undefined;
+        let token = jwt.sign({ user: userDB }, SEED, { expiresIn: 1014400 });
+        return res.status(200).json({
+          ok: true,
+          message: 'Login succefull',
+          user: userDB,
+          token: token
+        });
+      }
+    } else {
+      var user = new User();
+      user.name = googleUser.name;
+      user.email = googleUser.email;
+      user.google = true;
+      user.img = googleUser.img;
+      user.password = '###################';
+
+      user.save((error, savedUser) => {
+        if (error) {
+          return res.status(500).json({
+            ok: false,
+            message: "Error en la base de datos",
+            error: error
+          });
+        }
+
+        savedUser.password = undefined;
+        let token = jwt.sign({ user: savedUser }, SEED, { expiresIn: 1014400 });
+        return res.status(200).json({
+          ok: true,
+          message: 'User created',
+          user: savedUser,
+          token: token
+        });
+      });
+    }
+  });
 });
 
 module.exports = app;
